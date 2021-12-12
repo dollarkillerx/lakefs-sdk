@@ -1,8 +1,14 @@
 package lakefs_sdk
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
 
 	"github.com/dollarkillerx/urllib"
 )
@@ -178,7 +184,136 @@ func (l *LakeFsSdk) GetCommits(repository string, commitID string) (*CommitResp,
 	return &resp, nil
 }
 
-// ListObject 获取对象列表
-func (l *LakeFsSdk) ListObject(repository string, commitID string) (*CommitResp, error) {
+// ListObject 获取对象列表, (ref: branch or commit id)
+func (l *LakeFsSdk) ListObject(repository string, ref string) (*ListObjects, error) {
+	var resp ListObjects
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/ls", l.addr, repository, ref))).FromJsonByCode(&resp, 200)
+	if err != nil {
+		return nil, err
+	}
 
+	return &resp, nil
+}
+
+// UnderlyingProperties UnderlyingProperties, (ref: branch or commit id)
+func (l *LakeFsSdk) UnderlyingProperties(repository string, ref string, path string) (*UnderlyingProperties, error) {
+	var resp UnderlyingProperties
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/underlyingProperties", l.addr, repository, ref))).Queries("path", path).FromJsonByCode(&resp, 200)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// ObjectMetaData ObjectMetaData, (ref: branch or commit id)
+func (l *LakeFsSdk) ObjectMetaData(repository string, ref string, path string) (*Metadata, error) {
+	var resp Metadata
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/stat", l.addr, repository, ref))).Queries("path", path).FromJsonByCode(&resp, 200)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// DeleteObject DeleteObject, (ref: branch or commit id)
+func (l *LakeFsSdk) DeleteObject(repository string, branches string, path string) error {
+	code, resp, err := l.auth(urllib.Delete(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects", l.addr, repository, branches))).Queries("path", path).ByteOriginal()
+	if err != nil {
+		return err
+	}
+
+	if code == 204 {
+		return nil
+	}
+	return errors.New(string(resp))
+}
+
+// GetObject GetObject
+func (l *LakeFsSdk) GetObject(repository string, ref string, path string) ([]byte, error) {
+	code, resp, err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects", l.addr, repository, ref))).Queries("path", path).ByteOriginal()
+	if err != nil {
+		return nil, err
+	}
+
+	if code != 200 {
+		return nil, errors.New(string(resp))
+	}
+	return resp, nil
+}
+
+// UploadObject UploadObject
+func (l *LakeFsSdk) UploadObject(repository string, branches string, path string, data []byte) (*Object, error) {
+	body := new(bytes.Buffer)
+
+	writer := multipart.NewWriter(body)
+
+	formFile, err := writer.CreateFormFile("content", "content")
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = io.Copy(formFile, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects?path=%s", l.addr, repository, branches, path), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", writer.FormDataContentType())
+	req.Header.Add("Cookie", fmt.Sprintf("access_token=%s", l.token))
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 201 {
+		return nil, errors.New(string(content))
+	}
+
+	var obj Object
+
+	err = json.Unmarshal(content, &obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return &obj, nil
+	//code, resp, err := l.auth(urllib.Post(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects", l.addr, repository, branches))).
+	//	Queries("path", path).PostFile(path, uploadFile).ByteOriginal()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//if code != 200 {
+	//	return nil, errors.New(string(resp))
+	//}
+	//return resp, nil
+}
+
+// PutObject  PutObject
+func (l *LakeFsSdk) PutObject(repository string, branches string, path string, metadata SetMetadata) (*Metadata, error) {
+	var resp Metadata
+	err := l.auth(urllib.Put(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects", l.addr, repository, branches))).
+		Queries("path", path).SetJsonObject(metadata).FromJsonByCode(&resp, 201)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }

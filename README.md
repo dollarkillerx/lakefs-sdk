@@ -16,11 +16,12 @@ lakefs golang sdk
 - [x] DeleteBranch
 - [x] CreateCommit
 - [x] GetCommits
-- [ ] ListObject
-- [ ] GetObject
-- [ ] SetObjectMetaData
-- [ ] DeleteObject
-- [ ] GetObjectMetaData
-- [ ] GetObjectByPrefix
-- [ ] PutObject
+- [x] ListObject
+- [x] GetObject
+- [x] SetObjectMetaData
+- [x] DeleteObject
+- [x] GetObjectMetaData
+- [x] GetObjectByPrefix
+- [x] UploadObject
+- [x] PutObject
 

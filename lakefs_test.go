@@ -3,27 +3,103 @@ package lakefs_sdk
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"testing"
 	"time"
 )
 
+var key = "AKIAJ4HPAEQI42RCTRKQ"
+var serKey = "pOZO1EWeU1UKM8hGdTxXwj5OLBcR7Bgzd4Ue6CfT"
+
+var url = "http://192.168.31.20:8000"
+
+func TestLakeFsSDKUpload(t *testing.T) {
+	sdk, err := New(url, key, serKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	//file, err := ioutil.ReadFile("xxx.png")
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//object, err := sdk.UploadObject("demo", "main", "1o1o.png", file)
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//print(object)
+
+	metadata, err := sdk.PutObject("demo", "main", "1o1o.png", SetMetadata{
+		PhysicalAddress: "1o1o.png",
+		Metadata: map[string]string{
+			"v1": "vv",
+			"v2": "vv2",
+			"v3": "vv3",
+		},
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	print(metadata)
+}
 func TestLakeFsSDK1(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	repositories, err := sdk.Repositories()
+	branch, err := sdk.GetBranch("demo", "main")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(repositories)
+	print(branch)
+
+	object, err := sdk.ListObject("demo", branch.CommitId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	print(object)
+
+	for _, v := range object.Results {
+		properties, err := sdk.UnderlyingProperties("demo", branch.CommitId, v.Path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		print(properties)
+
+		data, err := sdk.ObjectMetaData("demo", branch.CommitId, v.Path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		print(data)
+
+		//if data.Path == "1000.png" {
+		//	err := sdk.DeleteObject("demo", "main", data.Path)
+		//	if err != nil {
+		//		log.Fatalln(err)
+		//	}
+		//}
+
+		if data.Path == "1000.png" {
+			getObject, err := sdk.GetObject("demo", branch.CommitId, data.Path)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			ioutil.WriteFile("xxx.png", getObject, 00666)
+		}
+	}
 }
 
 func TestLakeFsSDK2(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -52,7 +128,7 @@ func TestLakeFsSDK2(t *testing.T) {
 }
 
 func TestLakeFsSDK3(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -89,7 +165,7 @@ func TestLakeFsSDK3(t *testing.T) {
 }
 
 func TestLakeFsSDK4(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -111,7 +187,7 @@ func TestLakeFsSDK4(t *testing.T) {
 }
 
 func TestLakeFsSDK5(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -132,7 +208,7 @@ func TestLakeFsSDK5(t *testing.T) {
 }
 
 func TestLakeFsSDK6(t *testing.T) {
-	sdk, err := New("http://127.0.0.1:8000", "AKIAJUQJWJSA6HWHF2NQ", "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv")
+	sdk, err := New(url, key, serKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -149,12 +225,12 @@ func TestLakeFsSDK6(t *testing.T) {
 
 	fmt.Println(string(marshal))
 
-	commits, err := sdk.GetCommits("base", branch.CommitId)
+	lss, err := sdk.ListObject("base", branch.CommitId)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	print(commits)
+	print(lss)
 }
 
 func print(i interface{}) {
