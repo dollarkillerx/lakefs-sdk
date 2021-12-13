@@ -24,4 +24,5 @@ lakefs golang sdk
 - [x] GetObjectByPrefix
 - [x] UploadObject
 - [x] PutObject
+- [x] UploadObjectAndSetMetaData
 

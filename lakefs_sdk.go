@@ -306,6 +306,25 @@ func (l *LakeFsSdk) UploadObject(repository string, branches string, path string
 	//return resp, nil
 }
 
+// UploadObjectAndSetMetaData UploadObjectAndSetMetaData
+func (l *LakeFsSdk) UploadObjectAndSetMetaData(repository string, branches string, path string, data []byte, metadata map[string]string) error {
+	object, err := l.UploadObject(repository, branches, path, data)
+	if err != nil {
+		return err
+	}
+
+	_, err = l.PutObject(repository, branches, path, SetMetadata{
+		PhysicalAddress: object.PhysicalAddress,
+		Checksum:        object.Checksum,
+		SizeBytes:       object.SizeBytes,
+		Metadata:        metadata,
+		Mtime:           object.Mtime,
+		ContentType:     object.ContentType,
+	})
+
+	return err
+}
+
 // PutObject  PutObject
 func (l *LakeFsSdk) PutObject(repository string, branches string, path string, metadata SetMetadata) (*Metadata, error) {
 	var resp Metadata

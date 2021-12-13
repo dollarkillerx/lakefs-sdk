@@ -10,9 +10,43 @@ import (
 )
 
 var key = "AKIAJ4HPAEQI42RCTRKQ"
-var serKey = "pOZO1EWeU1UKM8hGdTxXwj5OLBcR7Bgzd4Ue6CfT"
+var serKey = "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv"
 
 var url = "http://192.168.31.20:8000"
+
+func init() {
+	key = "AKIAJUQJWJSA6HWHF2NQ"
+	serKey = "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv"
+
+	url = "http://127.0.0.1:8000"
+}
+
+func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
+	sdk, err := New(url, key, serKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	file, err := ioutil.ReadFile("model.go")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = sdk.UploadObjectAndSetMetaData("base", "main", "model.go", file, map[string]string{
+		"v1": "v22",
+		"v2": "v22",
+		"v3": "v22",
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	data, err := sdk.ObjectMetaData("base", "main", "model.go")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	print(data)
+}
 
 func TestLakeFsSDKUpload(t *testing.T) {
 	sdk, err := New(url, key, serKey)
@@ -31,19 +65,44 @@ func TestLakeFsSDKUpload(t *testing.T) {
 	//
 	//print(object)
 
-	metadata, err := sdk.PutObject("demo", "main", "1o1o.png", SetMetadata{
-		PhysicalAddress: "1o1o.png",
-		Metadata: map[string]string{
-			"v1": "vv",
-			"v2": "vv2",
-			"v3": "vv3",
-		},
-	})
+	//metadata, err := sdk.PutObject("base", "main", "a15b4afegy1fmvjq0djc7j21hc0u0tq4.jpeg", SetMetadata{
+	//	PhysicalAddress: "s3://lakefs/62608ece34424c1b818d3f8b0a6fadaf",
+	//	Metadata: map[string]string{
+	//		"v1": "vv",
+	//		"v2": "vv2",
+	//		"v3": "vv3",
+	//	},
+	//})
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//print(metadata)
+
+	data, err := sdk.ObjectMetaData("base", "main", "gb.pdf")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	print(metadata)
+	print(data)
+
+	//metadata, err := sdk.PutObject("base", "main", "gb.pdf", SetMetadata{
+	//	PhysicalAddress: data.PhysicalAddress,
+	//	Metadata: map[string]string{
+	//		"v1": "vv",
+	//		"v2": "vv2",
+	//		"v3": "vv3",
+	//	},
+	//	Checksum:    data.Checksum,
+	//	SizeBytes:   data.SizeBytes,
+	//	Mtime:       data.Mtime,
+	//	ContentType: data.ContentType,
+	//})
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//print(metadata)
 }
 func TestLakeFsSDK1(t *testing.T) {
 	sdk, err := New(url, key, serKey)
