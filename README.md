@@ -25,4 +25,6 @@ lakefs golang sdk
 - [x] UploadObject
 - [x] PutObject
 - [x] UploadObjectAndSetMetaData
+- [x] GetObjectHistoryCommits
+- [x] Diff
 

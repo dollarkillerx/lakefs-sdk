@@ -21,6 +21,34 @@ func init() {
 	url = "http://127.0.0.1:8000"
 }
 
+func TestLakeFsObjectCommits(t *testing.T) {
+	sdk, err := New(url, key, serKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	diff, err := sdk.GetObjectHistoryCommits("base", "main", "1.png")
+	if err != nil {
+		panic(err)
+	}
+
+	print(diff)
+}
+
+func TestLakeFsDiff(t *testing.T) {
+	sdk, err := New(url, key, serKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	diff, err := sdk.Diff("base", "main", "7c302319c989c5d769b8ac874cab21ded8f53798e69e41116b4de806fafc3fff")
+	if err != nil {
+		panic(err)
+	}
+
+	print(diff)
+}
+
 func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
 	sdk, err := New(url, key, serKey)
 	if err != nil {

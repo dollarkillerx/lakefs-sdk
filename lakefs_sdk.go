@@ -184,6 +184,18 @@ func (l *LakeFsSdk) GetCommits(repository string, commitID string) (*CommitResp,
 	return &resp, nil
 }
 
+// GetObjectHistoryCommits 获取文件袋commit历史
+func (l *LakeFsSdk) GetObjectHistoryCommits(repository string, ref string, path string) (*CommitHistory, error) {
+	var resp CommitHistory
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/commits", l.addr, repository, ref))).
+		Queries("objects", path).Queries("amount", "1000").FromJsonByCode(&resp, 200)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 // ListObject 获取对象列表, (ref: branch or commit id)
 func (l *LakeFsSdk) ListObject(repository string, ref string) (*ListObjects, error) {
 	var resp ListObjects
@@ -330,6 +342,19 @@ func (l *LakeFsSdk) PutObject(repository string, branches string, path string, m
 	var resp Metadata
 	err := l.auth(urllib.Put(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects", l.addr, repository, branches))).
 		Queries("path", path).SetJsonObject(metadata).FromJsonByCode(&resp, 201)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Diff	Diff
+func (l *LakeFsSdk) Diff(repository string, refs string, rightRef string) (*DiffResp, error) {
+	var resp DiffResp
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/diff/%s", l.addr, repository, refs, rightRef))).
+		Queries("amount", "1000").
+		FromJsonByCode(&resp, 200)
 	if err != nil {
 		return nil, err
 	}
