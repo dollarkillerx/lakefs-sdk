@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"time"
 
 	"github.com/dollarkillerx/urllib"
 )
@@ -18,20 +19,22 @@ type LakeFsSdk struct {
 	accessKeyID     string
 	secretAccessKey string
 	token           string
+	timeout         time.Duration
 }
 
 // New 初始化 LakeFsSdk
-func New(addr string, accessKeyID string, secretAccessKey string) (*LakeFsSdk, error) {
+func New(addr string, accessKeyID string, secretAccessKey string, timeout time.Duration) (*LakeFsSdk, error) {
 	l := LakeFsSdk{
 		addr:            addr,
 		accessKeyID:     accessKeyID,
 		secretAccessKey: secretAccessKey,
+		timeout:         timeout,
 	}
 
 	// login
 	var t token
 
-	err := urllib.Post(fmt.Sprintf("%s/api/v1/auth/login", l.addr)).
+	err := urllib.Post(fmt.Sprintf("%s/api/v1/auth/login", l.addr)).SetTimeout(timeout).
 		SetJsonObject(map[string]string{
 			"access_key_id":     l.accessKeyID,
 			"secret_access_key": l.secretAccessKey,
@@ -50,7 +53,7 @@ func (l *LakeFsSdk) auth(url *urllib.Urllib) *urllib.Urllib {
 		return url
 	}
 
-	return url.SetHeader("Cookie", fmt.Sprintf("access_token=%s", l.token))
+	return url.SetHeader("Cookie", fmt.Sprintf("access_token=%s", l.token)).KeepAlives().SetTimeout(l.timeout)
 }
 
 // Repositories 获取 所有存储库
