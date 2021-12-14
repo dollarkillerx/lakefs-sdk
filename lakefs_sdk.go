@@ -27,6 +27,9 @@ type LakeFsSdk struct {
 
 // New 初始化 LakeFsSdk
 func New(addr string, accessKeyID string, secretAccessKey string, timeout time.Duration) (*LakeFsSdk, error) {
+	if timeout <= time.Second {
+		timeout = time.Second * 3
+	}
 	l := LakeFsSdk{
 		addr:            addr,
 		accessKeyID:     accessKeyID,
@@ -55,7 +58,6 @@ func (l *LakeFsSdk) auth(url *urllib.Urllib) *urllib.Urllib {
 	if url == nil {
 		return url
 	}
-
 	return url.SetHeader("Cookie", fmt.Sprintf("access_token=%s", l.token)).KeepAlives().SetTimeout(l.timeout)
 }
 

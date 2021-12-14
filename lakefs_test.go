@@ -19,15 +19,20 @@ func init() {
 	serKey = "wnpeLpodovMgbqTVb3+hs1cjkPZkMPZGofz0LRvB"
 
 	urlr = "http://192.168.88.203:8011"
+
+	key = "AKIAJPLHGBNSL3JL5UUQ"
+	serKey = "wnpeLpodovMgbqTVb3+hs1cjkPZkMPZGofz0LRvB"
+
+	urlr = "http://192.168.88.203:8011"
 }
 
 func TestLakeFsObjectCommits(t *testing.T) {
-	sdk, err := New(urlr, key, serKey, time.Second)
+	sdk, err := New(urlr, key, serKey, time.Second*30)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	diff, err := sdk.GetObjectHistoryCommits("base", "main", "1.png")
+	diff, err := sdk.GetObjectHistoryCommits("base", "main", "00dede9c78aedf13942521df68b2426b.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +64,7 @@ func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = sdk.UploadObjectAndSetMetaData("lakefs-test", "main", "asd/model.go", file, map[string]string{
+	err = sdk.UploadObjectAndSetMetaData("base", "main", "asd/model.go", file, map[string]string{
 		"v1": "v22",
 		"v2": "v22",
 		"v3": "v22",
