@@ -12,17 +12,17 @@ import (
 var key = "AKIAJ4HPAEQI42RCTRKQ"
 var serKey = "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv"
 
-var url = "http://192.168.31.20:8000"
+var urlr = "http://192.168.31.20:8000"
 
 func init() {
-	key = "AKIAJUQJWJSA6HWHF2NQ"
-	serKey = "FFmNdpVv7kpHe7OKq27Y3KTguCYVKmnMeclhClnv"
+	key = "AKIAJPLHGBNSL3JL5UUQ"
+	serKey = "wnpeLpodovMgbqTVb3+hs1cjkPZkMPZGofz0LRvB"
 
-	url = "http://127.0.0.1:8000"
+	urlr = "http://192.168.88.203:8011"
 }
 
 func TestLakeFsObjectCommits(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -36,7 +36,7 @@ func TestLakeFsObjectCommits(t *testing.T) {
 }
 
 func TestLakeFsDiff(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -50,7 +50,7 @@ func TestLakeFsDiff(t *testing.T) {
 }
 
 func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second*5)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -59,7 +59,7 @@ func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = sdk.UploadObjectAndSetMetaData("base", "main", "model.go", file, map[string]string{
+	err = sdk.UploadObjectAndSetMetaData("lakefs-test", "main", "asd/model.go", file, map[string]string{
 		"v1": "v22",
 		"v2": "v22",
 		"v3": "v22",
@@ -68,7 +68,7 @@ func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
 		log.Fatalln(err)
 	}
 
-	data, err := sdk.ObjectMetaData("base", "main", "model.go")
+	data, err := sdk.ObjectMetaData("lakefs-test", "main", "asd/model.go")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -77,7 +77,7 @@ func TestLakeFsUploadObjectAndSetMetaData(t *testing.T) {
 }
 
 func TestLakeFsSDKUpload(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -133,7 +133,7 @@ func TestLakeFsSDKUpload(t *testing.T) {
 	//print(metadata)
 }
 func TestLakeFsSDK1(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -186,7 +186,7 @@ func TestLakeFsSDK1(t *testing.T) {
 }
 
 func TestLakeFsSDK2(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -215,7 +215,7 @@ func TestLakeFsSDK2(t *testing.T) {
 }
 
 func TestLakeFsSDK3(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -252,7 +252,7 @@ func TestLakeFsSDK3(t *testing.T) {
 }
 
 func TestLakeFsSDK4(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -274,7 +274,7 @@ func TestLakeFsSDK4(t *testing.T) {
 }
 
 func TestLakeFsSDK5(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -295,7 +295,7 @@ func TestLakeFsSDK5(t *testing.T) {
 }
 
 func TestLakeFsSDK6(t *testing.T) {
-	sdk, err := New(url, key, serKey)
+	sdk, err := New(urlr, key, serKey, time.Second)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -9,9 +9,12 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/dollarkillerx/urllib"
+	"github.com/dollarkillerx/urllib/lib"
 )
 
 type LakeFsSdk struct {
@@ -279,13 +282,29 @@ func (l *LakeFsSdk) UploadObject(repository string, branches string, path string
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects?path=%s", l.addr, repository, branches, path), body)
+	uri := fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s/objects", l.addr, repository, branches)
+
+	querys := url.Values{}
+	querys.Add("path", path)
+
+	distUrl, err := lib.BuildURLParams(uri, querys)
+	if err != nil {
+		return nil, err
+	}
+	parse, err := url.Parse(distUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", parse.String(), body)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	req.Header.Add("Cookie", fmt.Sprintf("access_token=%s", l.token))
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: l.timeout,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -363,4 +382,21 @@ func (l *LakeFsSdk) Diff(repository string, refs string, rightRef string) (*Diff
 	}
 
 	return &resp, nil
+}
+
+// BuildURLParams handle URL params
+func BuildURLParams(userURL string, params url.Values) (string, error) {
+	parsedURL, err := url.Parse(userURL)
+
+	if err != nil {
+		return "", err
+	}
+	return addQueryParams(parsedURL, params), nil
+}
+
+func addQueryParams(parsedURL *url.URL, parsedQuery url.Values) string {
+	if len(parsedQuery) > 0 {
+		return strings.Join([]string{strings.Replace(parsedURL.String(), "?"+parsedURL.RawQuery, "", -1), parsedQuery.Encode()}, "?")
+	}
+	return parsedURL.String()
 }
