@@ -32,7 +32,43 @@ func TestLakeFsObjectCommits(t *testing.T) {
 		log.Fatalln(err)
 	}
 
-	diff, err := sdk.GetObjectHistoryCommits("base", "main", "00dede9c78aedf13942521df68b2426b.txt")
+	diff, err := sdk.GetObjectHistoryCommits("test2", "main", "0006131de8c5938a492959c8262b358a.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	print(diff)
+}
+
+func TestLakeFsObjectCommits22(t *testing.T) {
+	sdk, err := New(urlr, key, serKey, time.Second*300)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	now := time.Now()
+	diff, err := sdk.CreateCommit("test3", "main", CommitMessage{
+		Message: "test2 commit test2",
+		Metadata: map[string]string{
+			"v1": "vv222",
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(time.Since(now).Milliseconds())
+
+	print(diff)
+}
+
+func TestLakeFsUut(t *testing.T) {
+	sdk, err := New(urlr, key, serKey, time.Second*30)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	diff, err := sdk.UploadObject("base", "main", "aaa.txt", []byte("asdsadasdwefwefwef"))
 	if err != nil {
 		panic(err)
 	}

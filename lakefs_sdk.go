@@ -349,6 +349,10 @@ func (l *LakeFsSdk) UploadObjectAndSetMetaData(repository string, branches strin
 		return err
 	}
 
+	if metadata == nil {
+		return nil
+	}
+
 	_, err = l.PutObject(repository, branches, path, SetMetadata{
 		PhysicalAddress: object.PhysicalAddress,
 		Checksum:        object.Checksum,
