@@ -390,6 +390,17 @@ func (l *LakeFsSdk) Diff(repository string, refs string, rightRef string) (*Diff
 	return &resp, nil
 }
 
+// GetObjectAndMetadata GetObjectAndMetadata
+func (l *LakeFsSdk) GetObjectAndMetadata(repository string, ref string, path string) (body []byte, metadata *Metadata, err error) {
+	object, err := l.GetObject(repository, ref, path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	data, _ := l.ObjectMetaData(repository, ref, path)
+	return object, data, nil
+}
+
 // BuildURLParams handle URL params
 func BuildURLParams(userURL string, params url.Values) (string, error) {
 	parsedURL, err := url.Parse(userURL)
