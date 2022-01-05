@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dollarkillerx/urllib"
@@ -23,6 +25,7 @@ type LakeFsSdk struct {
 	secretAccessKey string
 	token           string
 	timeout         time.Duration
+	mu              sync.Mutex
 }
 
 // New 初始化 LakeFsSdk
@@ -38,18 +41,11 @@ func New(addr string, accessKeyID string, secretAccessKey string, timeout time.D
 	}
 
 	// login
-	var t token
-
-	err := urllib.Post(fmt.Sprintf("%s/api/v1/auth/login", l.addr)).SetTimeout(timeout).
-		SetJsonObject(map[string]string{
-			"access_key_id":     l.accessKeyID,
-			"secret_access_key": l.secretAccessKey,
-		}).FromJson(&t)
+	go l.regularUpdateToken()
+	err := l.updateToken()
 	if err != nil {
 		return nil, err
 	}
-
-	l.token = t.Token
 
 	return &l, nil
 }
@@ -58,7 +54,45 @@ func (l *LakeFsSdk) auth(url *urllib.Urllib) *urllib.Urllib {
 	if url == nil {
 		return url
 	}
-	return url.SetHeader("Cookie", fmt.Sprintf("access_token=%s", l.token)).KeepAlives().SetTimeout(l.timeout)
+
+	return url.SetHeader("Cookie", fmt.Sprintf("access_token=%s", l.getToken())).KeepAlives().SetTimeout(l.timeout)
+}
+
+func (l *LakeFsSdk) getToken() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return l.token
+}
+
+func (l *LakeFsSdk) regularUpdateToken() {
+	ti := time.NewTicker(time.Hour * 4)
+	for {
+		select {
+		case <-ti.C:
+			err := l.updateToken()
+			if err != nil {
+				log.Println("Token 失效")
+			}
+		}
+	}
+}
+
+func (l *LakeFsSdk) updateToken() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	var t token
+	err := urllib.Post(fmt.Sprintf("%s/api/v1/auth/login", l.addr)).SetTimeout(time.Second * 10).
+		SetJsonObject(map[string]string{
+			"access_key_id":     l.accessKeyID,
+			"secret_access_key": l.secretAccessKey,
+		}).FromJson(&t)
+	if err != nil {
+		return err
+	}
+
+	l.token = t.Token
+	return nil
 }
 
 // Repositories 获取 所有存储库
@@ -103,7 +137,7 @@ func (l *LakeFsSdk) GetRepositories(repository string) (*GetRepositoriesResponse
 // DeleteRepositories Delete 存储库 Repositories
 func (l *LakeFsSdk) DeleteRepositories(repository string) error {
 	code, resp, err := l.auth(urllib.Delete(fmt.Sprintf("%s/api/v1/repositories/%s", l.addr, repository))).
-		Byte()
+		ByteOriginal()
 	if err != nil {
 		return err
 	}
@@ -132,7 +166,7 @@ func (l *LakeFsSdk) CreateBranch(repository string, branchName string, branchSou
 		SetJsonObject(map[string]string{
 			"name":   branchName,
 			"source": branchSource,
-		}).Byte()
+		}).ByteOriginal()
 	if err != nil {
 		return err
 	}
@@ -157,7 +191,7 @@ func (l *LakeFsSdk) GetBranch(repository string, branchName string) (*Branch, er
 
 // DeleteBranch 删除分支
 func (l *LakeFsSdk) DeleteBranch(repository string, branchName string) error {
-	code, bytes, err := l.auth(urllib.Delete(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s", l.addr, repository, branchName))).Byte()
+	code, bytes, err := l.auth(urllib.Delete(fmt.Sprintf("%s/api/v1/repositories/%s/branches/%s", l.addr, repository, branchName))).ByteOriginal()
 	if err != nil {
 		return err
 	}

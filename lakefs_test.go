@@ -412,3 +412,13 @@ func TestP(t *testing.T) {
 
 	time.Sleep(time.Second * 3)
 }
+
+func TestTime(t *testing.T) {
+	ti := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-ti.C:
+			fmt.Println("a")
+		}
+	}
+}
