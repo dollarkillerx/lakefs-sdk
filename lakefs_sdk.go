@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -239,9 +240,23 @@ func (l *LakeFsSdk) GetObjectHistoryCommits(repository string, ref string, path 
 }
 
 // ListObject 获取对象列表, (ref: branch or commit id)
-func (l *LakeFsSdk) ListObject(repository string, ref string) (*ListObjects, error) {
+func (l *LakeFsSdk) ListObject(repository string, ref string, after string, amount int) (*ListObjects, error) {
 	var resp ListObjects
-	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/ls", l.addr, repository, ref))).FromJsonByCode(&resp, 200)
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/ls", l.addr, repository, ref))).
+		Queries("after", after).Queries("amount", strconv.Itoa(amount)).FromJsonByCode(&resp, 200)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// ListObjectPrefix 获取对象列表, (ref: branch or commit id)
+func (l *LakeFsSdk) ListObjectPrefix(repository string, ref string, prefix string, after string, amount int) (*ListObjects, error) {
+	var resp ListObjects
+	err := l.auth(urllib.Get(fmt.Sprintf("%s/api/v1/repositories/%s/refs/%s/objects/ls", l.addr, repository, ref))).
+		Queries("prefix", prefix).
+		Queries("after", after).Queries("amount", strconv.Itoa(amount)).FromJsonByCode(&resp, 200)
 	if err != nil {
 		return nil, err
 	}

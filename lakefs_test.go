@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -186,7 +188,7 @@ func TestLakeFsSDK1(t *testing.T) {
 
 	print(branch)
 
-	object, err := sdk.ListObject("demo", branch.CommitId)
+	object, err := sdk.ListObject("demo", branch.CommitId, "", 100)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -353,7 +355,7 @@ func TestLakeFsSDK6(t *testing.T) {
 
 	fmt.Println(string(marshal))
 
-	lss, err := sdk.ListObject("base", branch.CommitId)
+	lss, err := sdk.ListObject("base", branch.CommitId, "", 1000)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -421,4 +423,80 @@ func TestTime(t *testing.T) {
 			fmt.Println("a")
 		}
 	}
+}
+
+func TestListObjectPrefix(t *testing.T) {
+	sdk, err := New("http://192.168.88.203:8011", "AKIAJOJ646YH42F6SGVQ", "AXIBSfcWCjt75FQvWtEqgVRGSkfEAB/8fSY1+6gT", 0)
+	if err != nil {
+		panic(err)
+	}
+
+	//object, err := sdk.ListObject("lakefs-static-official", "main", "", 1000)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//fmt.Println(len(object.Results))
+
+	path := `rime_data_caesar_high_tech_canceled/Z2FveGluX3F1eGlhbw==/2022/`
+
+	after := ""
+	for {
+		object, err := sdk.ListObjectPrefix("lakefs-static-official", "main", path, after, 1000)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(len(object.Results))
+		//Print(object)
+
+		if object.Pagination.NextOffset == "" {
+			break
+		}
+		fmt.Println("Next: ", object.Pagination.NextOffset)
+		after = object.Pagination.NextOffset
+
+		for _, v := range object.Results {
+			Print(v)
+			getObject, err := sdk.GetObject("lakefs-static-official", "main", v.Path)
+			if err != nil {
+				panic(err)
+			}
+
+			if !strings.Contains(v.Path, ".index") {
+				continue
+			}
+
+			var t Tt
+			err = json.Unmarshal(getObject, &t)
+			if err != nil {
+				log.Println(err)
+				log.Println(string(getObject))
+				continue
+			}
+
+			os.Exit(0)
+		}
+	}
+}
+
+type Tt struct {
+	Id              string    `json:"id"`
+	Title           string    `json:"title"`
+	Source          string    `json:"source"`
+	PublishedDate   int       `json:"published_date"`
+	Provider        string    `json:"provider"`
+	ProviderAssetId string    `json:"provider_asset_id"`
+	IsDynamic       bool      `json:"is_dynamic"`
+	ListPath        []string  `json:"list_path"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+func Print(i interface{}) {
+	marshal, err := json.Marshal(i)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(marshal))
 }
